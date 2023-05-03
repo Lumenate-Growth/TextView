@@ -8,6 +8,7 @@ extension TextView.Representable {
         private var originalText: NSAttributedString = .init()
         private var text: Binding<NSAttributedString>
         private var calculatedHeight: Binding<CGFloat>
+        private var isFocussed: Binding<Bool>
 
         var onCommit: (() -> Void)?
         var onEditingChanged: (() -> Void)?
@@ -17,7 +18,8 @@ extension TextView.Representable {
              calculatedHeight: Binding<CGFloat>,
              shouldEditInRange: ((Range<String.Index>, String) -> Bool)?,
              onEditingChanged: (() -> Void)?,
-             onCommit: (() -> Void)?
+             onCommit: (() -> Void)?,
+             isFocussed: Binding<Bool>
         ) {
             textView = UIKitTextView()
             textView.backgroundColor = .clear
@@ -28,6 +30,7 @@ extension TextView.Representable {
             self.shouldEditInRange = shouldEditInRange
             self.onEditingChanged = onEditingChanged
             self.onCommit = onCommit
+            self.isFocussed = isFocussed
 
             super.init()
             textView.delegate = self
@@ -35,6 +38,7 @@ extension TextView.Representable {
 
         func textViewDidBeginEditing(_ textView: UITextView) {
             originalText = text.wrappedValue
+            isFocussed.wrappedValue = true
         }
 
         func textViewDidChange(_ textView: UITextView) {
@@ -59,6 +63,7 @@ extension TextView.Representable {
             if onCommit != nil {
                 text.wrappedValue = originalText
             }
+            isFocussed.wrappedValue = false
         }
 
     }
@@ -104,6 +109,17 @@ extension TextView.Representable.Coordinator {
         if !representable.isScrollingEnabled {
             textView.textContainer.lineFragmentPadding = 0
             textView.textContainerInset = .zero
+        }
+        
+        switch representable.isFocussed {
+            case true:
+            if !textView.isFirstResponder {
+                textView.becomeFirstResponder()
+            }
+            case false:
+            if textView.isFirstResponder {
+                textView.resignFirstResponder()
+            }
         }
 
         recalculateHeight()

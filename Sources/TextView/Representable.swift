@@ -4,6 +4,7 @@ extension TextView {
     struct Representable: UIViewRepresentable {
 
         @Binding var text: NSAttributedString
+        @Binding var isFocussed: Bool
         @Binding var calculatedHeight: CGFloat
 
         let foregroundColor: UIColor
@@ -39,7 +40,8 @@ extension TextView {
                 calculatedHeight: $calculatedHeight,
                 shouldEditInRange: shouldEditInRange,
                 onEditingChanged: onEditingChanged,
-                onCommit: onCommit
+                onCommit: onCommit,
+                isFocussed: $isFocussed
             )
         }
 

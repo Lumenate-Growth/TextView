@@ -7,6 +7,7 @@ public struct TextView: View {
 
     @Binding private var text: NSAttributedString
     @Binding private var isEmpty: Bool
+    @Binding public var isFocussed: Bool
 
     @State private var calculatedHeight: CGFloat = 44
 
@@ -36,10 +37,12 @@ public struct TextView: View {
     ///   - shouldEditInRange: A closure that's called before an edit it applied, allowing the consumer to prevent the change
     ///   - onEditingChanged: A closure that's called after an edit has been applied
     ///   - onCommit: If this is provided, the field will automatically lose focus when the return key is pressed
+    ///   - isFocussed: A binding to whether the text field is focussed
     public init(_ text: Binding<String>,
          shouldEditInRange: ((Range<String.Index>, String) -> Bool)? = nil,
          onEditingChanged: (() -> Void)? = nil,
-         onCommit: (() -> Void)? = nil
+         onCommit: (() -> Void)? = nil,
+        isFocussed: Binding<Bool>
     ) {
         _text = Binding(
             get: { NSAttributedString(string: text.wrappedValue) },
@@ -54,6 +57,7 @@ public struct TextView: View {
         self.onCommit = onCommit
         self.shouldEditInRange = shouldEditInRange
         self.onEditingChanged = onEditingChanged
+        self._isFocussed = isFocussed
 
         allowRichText = false
     }
@@ -63,9 +67,12 @@ public struct TextView: View {
     ///   - text: A binding to the attributed text
     ///   - onEditingChanged: A closure that's called after an edit has been applied
     ///   - onCommit: If this is provided, the field will automatically lose focus when the return key is pressed
+    ///   - isFocussed: A binding to whether the text field is focussed
     public init(_ text: Binding<NSAttributedString>,
                 onEditingChanged: (() -> Void)? = nil,
-                onCommit: (() -> Void)? = nil
+                onCommit: (() -> Void)? = nil,
+                onFocusChanged: ((Bool) -> Void)? = nil,
+                isFocussed: Binding<Bool>
     ) {
         _text = text
         _isEmpty = Binding(
@@ -75,6 +82,7 @@ public struct TextView: View {
 
         self.onCommit = onCommit
         self.onEditingChanged = onEditingChanged
+        self._isFocussed = isFocussed
 
         allowRichText = true
     }
@@ -82,6 +90,7 @@ public struct TextView: View {
     public var body: some View {
         Representable(
             text: $text,
+            isFocussed: $isFocussed,
             calculatedHeight: $calculatedHeight,
             foregroundColor: foregroundColor,
             autocapitalization: autocapitalization,
@@ -135,14 +144,18 @@ final class UIKitTextView: UITextView {
 
 struct RoundedTextView: View {
     @State private var text: NSAttributedString = .init()
+    
+    @State private var firstFocussed: Bool = false
+    
+    @State private var secondFocussed: Bool = false
 
     var body: some View {
-        VStack(alignment: .leading) {
-            TextView($text)
+        VStack(alignment: .leading, spacing: 12) {
+            TextView($text, isFocussed: $firstFocussed)
                 .padding(.leading, 25)
 
             GeometryReader { _ in
-                TextView($text)
+                TextView($text, isFocussed: $secondFocussed)
                     .placeholder("Enter some text")
                     .padding(10)
                     .overlay(
@@ -153,6 +166,15 @@ struct RoundedTextView: View {
                     .padding()
             }
             .background(Color(.systemBackground).edgesIgnoringSafeArea(.all))
+            
+            Button(firstFocussed ? "Unfocus First" : "Focus First") {
+                firstFocussed.toggle()
+            }
+            .frame(maxWidth: .infinity)
+            Button(secondFocussed ? "Unfocus Second" : "Focus Second") {
+                secondFocussed.toggle()
+            }
+            .frame(maxWidth: .infinity)
 
             Button {
                 text = NSAttributedString(string: "This is interesting", attributes: [
