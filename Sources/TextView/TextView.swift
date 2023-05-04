@@ -71,7 +71,6 @@ public struct TextView: View {
     public init(_ text: Binding<NSAttributedString>,
                 onEditingChanged: (() -> Void)? = nil,
                 onCommit: (() -> Void)? = nil,
-                onFocusChanged: ((Bool) -> Void)? = nil,
                 isFocussed: Binding<Bool>
     ) {
         _text = text
